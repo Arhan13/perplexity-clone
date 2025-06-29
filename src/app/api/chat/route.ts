@@ -1,84 +1,103 @@
-import { NextRequest, NextResponse } from "next/server";
-import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
+import { openai } from "@ai-sdk/openai";
 
-export async function POST(request: NextRequest) {
+interface Source {
+  title: string;
+  url: string;
+  content: string;
+  domain: string;
+}
+
+interface Message {
+  query: string;
+  aiResponse: string;
+}
+
+export async function POST(request: Request) {
   try {
-    const { query, sources } = await request.json();
+    const {
+      query,
+      sources,
+      messages = [],
+    }: {
+      query: string;
+      sources: Source[];
+      messages?: Message[];
+    } = await request.json();
 
     if (!query || !sources) {
-      return new Response("Query and sources are required", { status: 400 });
+      return Response.json(
+        { error: "Query and sources are required" },
+        { status: 400 }
+      );
     }
-
-    // Prepare sources for the prompt
-    interface Source {
-      title: string;
-      url: string;
-      content: string;
-    }
-
-    const sourcesText = (sources as Source[])
-      .map(
-        (source, index) =>
-          `[${index + 1}] ${source.title}\nURL: ${
-            source.url
-          }\nContent: ${source.content.substring(0, 1000)}...\n`
-      )
-      .join("\n");
-
-    const prompt = `You are an AI assistant that provides comprehensive, well-researched answers based on web search results. Your task is to analyze the provided sources and create a detailed response to the user's query.
-
-User Query: "${query}"
-
-Available Sources:
-${sourcesText}
-
-Instructions:
-1. Provide a comprehensive answer based on the sources provided
-2. Use inline citations in the format [1], [2], etc. to reference specific sources
-3. Include multiple citations when information comes from different sources
-4. Structure your response with clear markdown headers (### for sections)
-5. Be factual and accurate, only using information from the sources
-6. If sources conflict, mention the different perspectives
-7. Make sure to cite sources throughout your response, not just at the end
-8. Use markdown formatting for better readability (headers, lists, bold text)
-9. Aim for a detailed response that thoroughly addresses the query
-
-Please provide your response:`;
 
     console.log("Starting AI response generation...");
     console.log("Query:", query);
     console.log("Number of sources:", sources.length);
+    console.log("Previous messages:", messages.length);
 
-    // Check if we want to use streaming or not
-    const useStreaming = true; // Set to false for debugging
-
-    if (useStreaming) {
-      const result = await streamText({
-        model: openai("gpt-4o"),
-        prompt,
-        temperature: 0.7,
-        maxTokens: 2000,
-      });
-
-      console.log("Streaming response started");
-      return result.toDataStreamResponse();
-    } else {
-      // Fallback non-streaming version for debugging
-      const { generateText } = await import("ai");
-
-      const result = await generateText({
-        model: openai("gpt-4o"),
-        prompt,
-        temperature: 0.7,
-        maxTokens: 2000,
-      });
-
-      console.log("Non-streaming response generated");
-      return NextResponse.json({ content: result.text });
+    // Build context from previous conversation
+    let conversationContext = "";
+    if (messages.length > 0) {
+      conversationContext =
+        "Previous conversation:\n" +
+        messages
+          .slice(-3)
+          .map(
+            (msg: Message) =>
+              `Q: ${msg.query}\nA: ${msg.aiResponse.substring(0, 200)}...`
+          )
+          .join("\n\n") +
+        "\n\nCurrent question:";
     }
+
+    // Create a comprehensive prompt for the AI
+    const prompt = `${
+      conversationContext ? conversationContext + " " : ""
+    }${query}
+
+Based on the following search results, provide a comprehensive and accurate response. Use citations in the format [1], [2], etc. to reference the sources. Make sure to:
+
+1. Answer the question directly and thoroughly
+2. Include relevant details from the sources
+3. Use proper citations [1], [2], etc. throughout your response
+4. Structure your response with clear sections if appropriate
+5. Be conversational and engaging
+${
+  conversationContext
+    ? "6. Build upon the previous conversation context when relevant"
+    : ""
+}
+
+Sources:
+${sources
+  .map(
+    (source: Source, index: number) =>
+      `[${index + 1}] ${source.title} - ${
+        source.domain
+      }\n${source.content.substring(0, 500)}...\n`
+  )
+  .join("\n")}
+
+Please provide a detailed response with proper citations:`;
+
+    console.log("Streaming response started");
+
+    // Stream response from OpenAI
+    const result = streamText({
+      model: openai("gpt-4o"),
+      prompt,
+      temperature: 0.7,
+      maxTokens: 2000,
+    });
+
+    return result.toDataStreamResponse();
   } catch (error) {
-    console.error("Chat API error:", error);
-    return new Response("Failed to generate response", { status: 500 });
+    console.error("Error in chat API:", error);
+    return Response.json(
+      { error: "Failed to generate AI response" },
+      { status: 500 }
+    );
   }
 }
