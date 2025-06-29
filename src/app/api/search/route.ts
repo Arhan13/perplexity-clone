@@ -6,6 +6,8 @@ interface TavilySearchPayload {
   max_results: number;
   include_raw_content: boolean;
   include_answer: boolean;
+  include_images: boolean;
+  include_image_descriptions: boolean;
   topic: "general" | "news";
   include_domains?: string[];
 }
@@ -32,6 +34,8 @@ export async function POST(request: NextRequest) {
       max_results: 15,
       include_raw_content: true,
       include_answer: false,
+      include_images: true,
+      include_image_descriptions: true,
       topic: "general",
     };
 
@@ -69,6 +73,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       results,
+      images: searchData.images || [],
       query,
       totalResults: results.length,
     });

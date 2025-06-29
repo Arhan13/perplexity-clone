@@ -7,6 +7,7 @@ import {
   SearchResult,
   Message,
   DomainOption,
+  SearchImage,
 } from "../types/search";
 
 export const DOMAIN_OPTIONS: DomainOption[] = [
@@ -63,6 +64,7 @@ const initialState: SearchState = {
   isSearching: false,
   searchStatus: "",
   currentResults: [],
+  currentImages: [],
   currentAiResponse: "",
   isStreaming: false,
   progress: 0,
@@ -134,7 +136,9 @@ export function useSearch() {
     if (!state.currentQuery.trim() || state.isSearching) return;
 
     const searchSteps = initializeSearchSteps(state.currentQuery);
-    let searchData: { results: SearchResult[] } = { results: [] };
+    let searchData: { results: SearchResult[]; images?: SearchImage[] } = {
+      results: [],
+    };
 
     // Clear previous state and initialize new search
     setState((prev) => ({
@@ -142,6 +146,7 @@ export function useSearch() {
       isSearching: true,
       searchStatus: "Searching the web...",
       currentResults: [],
+      currentImages: [],
       currentAiResponse: "",
       searchSteps: [],
       progress: 10,
@@ -196,6 +201,7 @@ export function useSearch() {
       setState((prev) => ({
         ...prev,
         currentResults: searchData.results,
+        currentImages: searchData.images || [],
         searchStatus: "Reading sources...",
         progress: 60,
       }));
@@ -304,6 +310,7 @@ export function useSearch() {
         id: Date.now().toString(),
         query: state.currentQuery,
         results: searchData.results,
+        images: searchData.images || [],
         aiResponse: aiResponseText,
         searchSteps: completedSteps,
         selectedDomain: state.selectedDomain,
@@ -321,6 +328,7 @@ export function useSearch() {
         currentQuery: "",
         // Clear current search state to prevent duplicate display
         currentResults: [],
+        currentImages: [],
         currentAiResponse: "",
         searchSteps: [],
       }));

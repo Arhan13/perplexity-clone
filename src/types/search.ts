@@ -5,6 +5,11 @@ export interface SearchResult {
   domain: string;
 }
 
+export interface SearchImage {
+  url: string;
+  description?: string;
+}
+
 export interface DomainOption {
   id: string;
   name: string;
@@ -32,6 +37,7 @@ export interface Message {
   id: string;
   query: string;
   results: SearchResult[];
+  images: SearchImage[];
   aiResponse: string;
   searchSteps: SearchStep[];
   selectedDomain: DomainOption;
@@ -43,13 +49,14 @@ export interface SearchState {
   isSearching: boolean;
   searchStatus: string;
   currentResults: SearchResult[];
+  currentImages: SearchImage[];
   currentAiResponse: string;
   isStreaming: boolean;
   progress: number;
   messages: Message[];
-  activeTab: "perplexity" | "sources";
+  activeTab: "perplexity" | "sources" | "images";
   searchSteps: SearchStep[];
   selectedDomain: DomainOption;
 }
 
-export type TabType = "perplexity" | "sources";
+export type TabType = "perplexity" | "sources" | "images";

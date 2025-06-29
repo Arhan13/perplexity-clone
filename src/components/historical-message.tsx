@@ -38,6 +38,16 @@ export function HistoricalMessage({ message }: HistoricalMessageProps) {
         >
           🌐 Sources • {message.results.length}
         </button>
+        <button
+          onClick={() => setActiveTab("images")}
+          className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === "images"
+              ? "border-blue-600 text-blue-600 dark:text-blue-400"
+              : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300"
+          }`}
+        >
+          🖼️ Images • {message.images.length}
+        </button>
       </div>
 
       {/* Tab Content */}
@@ -131,6 +141,44 @@ export function HistoricalMessage({ message }: HistoricalMessageProps) {
             {message.results.map((result, index) => (
               <SourceCard key={index} result={result} index={index} compact />
             ))}
+          </div>
+        )}
+
+        {/* Images Tab */}
+        {activeTab === "images" && (
+          <div className="space-y-4">
+            {message.images.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {message.images.map((image, index) => (
+                  <div key={index} className="group cursor-pointer">
+                    <div className="aspect-square bg-slate-100 dark:bg-slate-700 rounded-lg overflow-hidden">
+                      <img
+                        src={image.url}
+                        alt={image.description || `Search image ${index + 1}`}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                        onClick={() => window.open(image.url, "_blank")}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src =
+                            "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIxIDEzVjE5QzIxIDIwLjEgMjAuMSAyMSAxOSAyMUg1QzMuOSAyMSAzIDIwLjEgMyAxOVY1QzMgMy45IDMuOSAzIDUgM0gxM0wxNSA1SDE5QzIwLjEgNSAyMSA1LjkgMjEgN1YxM1oiIHN0cm9rZT0iY3VycmVudENvbG9yIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8Y2lyY2xlIGN4PSI5IiBjeT0iOSIgcj0iMiIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CjxwYXRoIGQ9Ik0yMSAxNUwxNiAxMEw1IDIxIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+Cg==";
+                        }}
+                      />
+                    </div>
+                    {image.description && (
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-2 line-clamp-2">
+                        {image.description}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-slate-500 dark:text-slate-400">
+                  No images found for this search.
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>

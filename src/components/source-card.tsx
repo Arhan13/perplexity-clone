@@ -35,12 +35,17 @@ export function SourceCard({
       }`}
     >
       {/* Index/Favicon */}
-      <div className="flex items-center shrink-0">
+      <div className="flex items-center gap-2 shrink-0">
+        {/* Source Number Badge */}
+        <div className="bg-blue-600 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-sm">
+          {index + 1}
+        </div>
+
         {faviconUrl ? (
           <div className="relative">
             <Avatar className="w-5 h-5">
               <AvatarFallback className="text-[10px] bg-slate-100 dark:bg-slate-700">
-                {index + 1}
+                {result.domain.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <Image
@@ -50,7 +55,7 @@ export function SourceCard({
               alt={`${result.domain} favicon`}
               className="absolute inset-0 w-5 h-5 rounded-full object-cover"
               onError={(e) => {
-                // Hide favicon if it fails to load
+                // Hide favicon if it fails to load, fallback will show
                 e.currentTarget.style.display = "none";
               }}
             />
@@ -58,7 +63,7 @@ export function SourceCard({
         ) : (
           <Avatar className="w-5 h-5">
             <AvatarFallback className="text-[10px] bg-slate-100 dark:bg-slate-700">
-              {index + 1}
+              {result.domain.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
         )}
