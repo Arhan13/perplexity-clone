@@ -5,6 +5,14 @@ export interface SearchResult {
   domain: string;
 }
 
+export interface DomainOption {
+  id: string;
+  name: string;
+  domains: string[];
+  description: string;
+  icon: string;
+}
+
 export interface SearchStep {
   id: string;
   title: string;
@@ -26,6 +34,7 @@ export interface Message {
   results: SearchResult[];
   aiResponse: string;
   searchSteps: SearchStep[];
+  selectedDomain: DomainOption;
   timestamp: Date;
 }
 
@@ -38,8 +47,9 @@ export interface SearchState {
   isStreaming: boolean;
   progress: number;
   messages: Message[];
-  activeTab: "perplexity" | "sources" | "steps";
+  activeTab: "perplexity" | "sources";
   searchSteps: SearchStep[];
+  selectedDomain: DomainOption;
 }
 
-export type TabType = "perplexity" | "sources" | "steps";
+export type TabType = "perplexity" | "sources";

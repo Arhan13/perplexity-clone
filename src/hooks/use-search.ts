@@ -6,7 +6,57 @@ import {
   SearchStep,
   SearchResult,
   Message,
+  DomainOption,
 } from "../types/search";
+
+export const DOMAIN_OPTIONS: DomainOption[] = [
+  {
+    id: "all",
+    name: "All Web",
+    domains: [],
+    description: "Search across the entire web",
+    icon: "🌐",
+  },
+  {
+    id: "reddit",
+    name: "Reddit",
+    domains: ["reddit.com"],
+    description: "Search Reddit discussions and communities",
+    icon: "🟠",
+  },
+  {
+    id: "news",
+    name: "News Sites",
+    domains: ["cnn.com", "bbc.com", "reuters.com", "apnews.com", "npr.org"],
+    description: "Search major news publications",
+    icon: "📰",
+  },
+  {
+    id: "academic",
+    name: "Academic",
+    domains: [
+      "scholar.google.com",
+      "arxiv.org",
+      "pubmed.ncbi.nlm.nih.gov",
+      "jstor.org",
+    ],
+    description: "Search academic papers and research",
+    icon: "🎓",
+  },
+  {
+    id: "tech",
+    name: "Tech Sites",
+    domains: [
+      "stackoverflow.com",
+      "github.com",
+      "techcrunch.com",
+      "arstechnica.com",
+      "wired.com",
+    ],
+    description: "Search technology-focused websites",
+    icon: "💻",
+  },
+];
 
 const initialState: SearchState = {
   currentQuery: "",
@@ -19,6 +69,7 @@ const initialState: SearchState = {
   messages: [],
   activeTab: "perplexity",
   searchSteps: [],
+  selectedDomain: DOMAIN_OPTIONS[0], // Default to "All Web"
 };
 
 export function useSearch() {
@@ -114,7 +165,13 @@ export function useSearch() {
       const searchResponse = await fetch("/api/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: state.currentQuery }),
+        body: JSON.stringify({
+          query: state.currentQuery,
+          domains:
+            state.selectedDomain.domains.length > 0
+              ? state.selectedDomain.domains
+              : undefined,
+        }),
       });
 
       if (!searchResponse.ok) throw new Error("Search failed");
@@ -215,29 +272,33 @@ export function useSearch() {
         }
       }
 
-      // Complete step 3 with response details
-      updateSearchStep(
-        "3",
-        { status: "completed" },
-        {
-          responseLength: aiResponseText.length,
-        }
-      );
+      // Create properly completed steps with all details
+      const endTime = Date.now();
+      const completedSteps = state.searchSteps.map((step, idx) => {
+        const duration = step.details?.startTime
+          ? endTime - step.details.startTime
+          : 0;
 
-      // Save to conversation history with enhanced steps
-      const completedSteps = state.searchSteps.map((step, idx) => ({
-        ...step,
-        status: "completed" as const,
-        details: {
+        // Build complete step details based on step type
+        const stepDetails = {
           ...step.details,
-          endTime: Date.now(),
-          duration: step.details?.startTime
-            ? Date.now() - step.details.startTime
-            : 0,
+          endTime,
+          duration,
+          status: "completed" as const,
+          // Add step-specific details
           ...(idx === 0 && { sourcesFound: searchData.results.length }),
+          ...(idx === 1 && { sourcesFound: searchData.results.length }),
           ...(idx === 2 && { responseLength: aiResponseText.length }),
-        },
-      }));
+        };
+
+        return {
+          ...step,
+          status: "completed" as const,
+          details: stepDetails,
+          // Ensure sources are included for step 2
+          ...(idx === 1 && { sources: searchData.results }),
+        };
+      });
 
       const newMessage: Message = {
         id: Date.now().toString(),
@@ -245,6 +306,7 @@ export function useSearch() {
         results: searchData.results,
         aiResponse: aiResponseText,
         searchSteps: completedSteps,
+        selectedDomain: state.selectedDomain,
         timestamp: new Date(),
       };
 
@@ -257,9 +319,10 @@ export function useSearch() {
         messages: [...prev.messages, newMessage],
         activeTab: "perplexity",
         currentQuery: "",
-        currentResults: [], // Clear current results after completion
-        currentAiResponse: "", // Clear current response after completion
-        searchSteps: [], // Clear current steps after completion
+        // Clear current search state to prevent duplicate display
+        currentResults: [],
+        currentAiResponse: "",
+        searchSteps: [],
       }));
 
       // Auto-focus the input
@@ -287,10 +350,15 @@ export function useSearch() {
     setState((prev) => ({ ...prev, activeTab: tab }));
   };
 
+  const updateSelectedDomain = (domain: DomainOption) => {
+    setState((prev) => ({ ...prev, selectedDomain: domain }));
+  };
+
   return {
     state,
     handleSearch,
     updateQuery,
     setActiveTab,
+    updateSelectedDomain,
   };
 }

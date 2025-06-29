@@ -6,7 +6,6 @@ import remarkGfm from "remark-gfm";
 import { Message, TabType } from "../types/search";
 import { preprocessCitations } from "../utils/citations";
 import { SourceCard } from "./source-card";
-import { SearchStep } from "./search-step";
 
 interface HistoricalMessageProps {
   message: Message;
@@ -27,7 +26,7 @@ export function HistoricalMessage({ message }: HistoricalMessageProps) {
               : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300"
           }`}
         >
-          🔮 Perplexity
+          🔮 Perplexity Clone
         </button>
         <button
           onClick={() => setActiveTab("sources")}
@@ -38,16 +37,6 @@ export function HistoricalMessage({ message }: HistoricalMessageProps) {
           }`}
         >
           🌐 Sources • {message.results.length}
-        </button>
-        <button
-          onClick={() => setActiveTab("steps")}
-          className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === "steps"
-              ? "border-blue-600 text-blue-600 dark:text-blue-400"
-              : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300"
-          }`}
-        >
-          ⚡ Steps
         </button>
       </div>
 
@@ -141,19 +130,6 @@ export function HistoricalMessage({ message }: HistoricalMessageProps) {
           <div className="space-y-2">
             {message.results.map((result, index) => (
               <SourceCard key={index} result={result} index={index} compact />
-            ))}
-          </div>
-        )}
-
-        {/* Steps Tab */}
-        {activeTab === "steps" && (
-          <div className="space-y-6">
-            {message.searchSteps.map((step, index) => (
-              <SearchStep
-                key={step.id}
-                step={step}
-                isLast={index === message.searchSteps.length - 1}
-              />
             ))}
           </div>
         )}

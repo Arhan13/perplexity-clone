@@ -3,17 +3,23 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useRef } from "react";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Send, ChevronDown } from "lucide-react";
 import { Progress } from "./ui/progress";
 import { Separator } from "./ui/separator";
-import { useSearch } from "../hooks/use-search";
+import { useSearch, DOMAIN_OPTIONS } from "../hooks/use-search";
 import { preprocessCitations } from "../utils/citations";
 import { HistoricalMessage } from "./historical-message";
 import { SearchStep } from "./search-step";
 import { SourceCard } from "./source-card";
 
 export function SearchInterface() {
-  const { state, handleSearch, updateQuery, setActiveTab } = useSearch();
+  const {
+    state,
+    handleSearch,
+    updateQuery,
+    setActiveTab,
+    updateSelectedDomain,
+  } = useSearch();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -91,7 +97,7 @@ export function SearchInterface() {
                             : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300"
                         }`}
                       >
-                        🔮 Perplexity
+                        🔮 Perplexity Clone
                       </button>
                       <button
                         onClick={() => setActiveTab("sources")}
@@ -102,16 +108,6 @@ export function SearchInterface() {
                         }`}
                       >
                         🌐 Sources • {state.currentResults.length}
-                      </button>
-                      <button
-                        onClick={() => setActiveTab("steps")}
-                        className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                          state.activeTab === "steps"
-                            ? "border-blue-600 text-blue-600 dark:text-blue-400"
-                            : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300"
-                        }`}
-                      >
-                        ⚡ Steps
                       </button>
                     </div>
 
@@ -280,26 +276,6 @@ export function SearchInterface() {
                           )}
                         </div>
                       )}
-
-                      {/* Steps Tab */}
-                      {state.activeTab === "steps" && (
-                        <div className="space-y-6">
-                          {state.searchSteps.length > 0 ? (
-                            state.searchSteps.map((step, index) => (
-                              <SearchStep
-                                key={step.id}
-                                step={step}
-                                isLast={index === state.searchSteps.length - 1}
-                              />
-                            ))
-                          ) : (
-                            <p className="text-slate-500 dark:text-slate-400 text-center py-8">
-                              Search steps will appear here during the search
-                              process.
-                            </p>
-                          )}
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -311,7 +287,35 @@ export function SearchInterface() {
 
       {/* Fixed Search Input */}
       <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 p-4">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto space-y-3">
+          {/* Domain Selector */}
+          <div className="flex items-center justify-center">
+            <div className="relative">
+              <select
+                value={state.selectedDomain.id}
+                onChange={(e) => {
+                  const selectedDomain = DOMAIN_OPTIONS.find(
+                    (d) => d.id === e.target.value
+                  );
+                  if (selectedDomain) updateSelectedDomain(selectedDomain);
+                }}
+                className="appearance-none bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+                disabled={state.isSearching || state.isStreaming}
+              >
+                {DOMAIN_OPTIONS.map((domain) => (
+                  <option key={domain.id} value={domain.id}>
+                    {domain.icon} {domain.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            </div>
+            <div className="ml-3 text-xs text-slate-500 dark:text-slate-400 max-w-xs">
+              {state.selectedDomain.description}
+            </div>
+          </div>
+
+          {/* Search Input */}
           <div className="relative">
             <textarea
               ref={textareaRef}
